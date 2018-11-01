@@ -1,5 +1,5 @@
-var SimpleStorage = artifacts.require("./SimpleStorage.sol");
+var CurrencyBet = artifacts.require("./CurrencyBet.sol");
 
-module.exports = function(deployer) {
-  deployer.deploy(SimpleStorage);
+module.exports = (deployer) => {
+  deployer.deploy(CurrencyBet);
 };
