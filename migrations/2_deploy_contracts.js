@@ -1,5 +1,5 @@
-var CurrencyBet = artifacts.require("./CurrencyBet.sol");
+var Currency = artifacts.require("./Currency.sol");
 
 module.exports = (deployer) => {
-  deployer.deploy(CurrencyBet);
+  deployer.deploy(Currency);
 };
