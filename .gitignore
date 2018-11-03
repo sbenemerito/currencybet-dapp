@@ -1,4 +1,5 @@
-bundle.js
+build/
+build.js
 *.hot-update.js
 *.hot-update.json
 node_modules/
