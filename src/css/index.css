@@ -1,5 +1,5 @@
 body {
-  font-family: 'open sans';
+  font-family: 'Montserrat';
   margin: 0;
 }
 
@@ -11,19 +11,33 @@ ul {
 
 li {
   padding: 40px;
-  border: 2px solid rgb(30,134,255);
+  border: 2px solid rgb(26, 185, 46);
   margin-right: 5px;
   border-radius: 10px;
   cursor: pointer;
 }
 
 li:hover {
-  background-color: rgb(30,134,255);
+  background-color: rgb(26, 185, 46);
   color: white;
 }
 
 li:active {
   opacity: 0.7;
+}
+
+.normal-ul {
+  display: block !important;
+}
+
+.normal-li {
+  padding: 10px !important;
+  border: none !important;
+}
+
+.normal-li:hover {
+  background-color: #ffffff !important;
+  color: #444444 !important;
 }
 
 * {
@@ -40,7 +54,7 @@ li:active {
 }
 
 .number-selected {
-  background-color: rgb(30,134,255);
+  background-color: rgb(26, 185, 46);
   color: white;
 }
 
@@ -49,5 +63,31 @@ li:active {
   border-radius: 10px;
   border: 1px solid lightgrey;
   font-size: 15pt;
-  margin: 0 10px;
+  margin: 15px 0;
+}
+
+.bet-type-input {
+  padding: 15px;
+  border-radius: 10px;
+  border: 1px solid lightgrey;
+  font-size: 15pt;
+  margin: 15px;
+  font-family: Montserrat;
+  font-weight: 900;
+}
+
+button {
+  padding: 15px;
+  border-radius: 10px;
+  border: 1px solid lightgrey;
+  font-size: 15pt;
+  font-family: Montserrat;
+  font-weight: 900;
+  background-color: rgb(26, 185, 46);
+  width: 400px;
+  color: #ffffff;
+}
+
+.currencyButton {
+  width: 575px !important;
 }
