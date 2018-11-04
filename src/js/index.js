@@ -110,12 +110,18 @@ class App extends React.Component {
       betType = betType.value;
       betAmount = betAmount.value;
 
-      this.state.ContractInstance.bet(number, betAmount, betType, {
-        gas: 300000,
-        from: web3.eth.accounts[0]
-      }, (err, result) => {
-        callBack()
-      })
+      if ((betType == 0 && this.state.userBronze < betAmount) ||
+          (betType == 1 && this.state.userSilver < betAmount) ||
+          (betType == 2 && this.state.userGold < betAmount)) {
+        alert('Not enough funds!');
+      } else {
+        this.state.ContractInstance.bet(number, betAmount, betType, {
+          gas: 300000,
+          from: web3.eth.accounts[0]
+        }, (err, result) => {
+          callBack()
+        });
+      }
     }
   }
 
@@ -129,12 +135,18 @@ class App extends React.Component {
       convertToType = convertToType.value;
       convertAmount = convertAmount.value;
 
-      this.state.ContractInstance.convert(convertFromType, convertToType, convertAmount, {
-        gas: 300000,
-        from: web3.eth.accounts[0]
-      }, (err, result) => {
-        callBack()
-      })
+      if ((convertFromType == 0 && convertAmount < this.state.userBronze) ||
+          (convertFromType == 1 && convertAmount < this.state.userSilver) ||
+          (convertFromType == 2 && convertAmount < this.state.userGold)) {
+        alert('Not enough funds!');
+      } else {
+        this.state.ContractInstance.convert(convertFromType, convertToType, convertAmount, {
+          gas: 300000,
+          from: web3.eth.accounts[0]
+        }, (err, result) => {
+          callBack()
+        });
+      }
     }
   }
 
