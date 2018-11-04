@@ -1,19 +1,7 @@
 pragma solidity ^0.4.24;
 
 
-contract ERC20 {
-    function totalSupply() public view returns (uint256);
-    function balanceOf(address _owner) public view returns (uint256);
-    function transfer(address _to, uint256 _value) public returns (bool);
-    function approve(address _spender, uint256 _value) public returns (bool);
-    function allowance(address _owner, address _spender) public view returns (uint256);
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool);
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-}
-
-contract ERC1203 is ERC20 {
+contract ERC1203 {
     function totalSupply(uint256 _class) public view returns (uint256);
     function balanceOf(address _owner, uint256 _class) public view returns (uint256);
     function transfer(address _to, uint256 _class, uint256 _value) public returns (bool);
@@ -42,6 +30,7 @@ contract Currency is ERC1203 {
 
     struct Player {
         uint256 amountBet;
+        uint256 amountClass;
         uint8 numberSelected;
     }
 
@@ -49,58 +38,28 @@ contract Currency is ERC1203 {
     address[] public players;
     uint8 public betCount;
     uint8 public constant BET_COUNT_LIMIT = 10;
-    uint256 private constant BASE_CLASS = uint256(CurrencyClass.bronze);
-    uint256 public totalBet;
+
+    mapping(uint256 => uint256) private _supplies;
+    mapping(address => Player) private _playerInfo;
+    mapping(uint256 => mapping(uint256 => uint256)) private _bets;
+    mapping(address => mapping(uint256 => uint256)) private _balances;
+    mapping(address => mapping(address => mapping(uint256 => uint256))) private _allowances;
 
     function() public payable {}
 
     constructor() public {
         owner = msg.sender;
         betCount = 0;
+        for (uint256 x = 0; x < 6; x++) {
+            _bets[x][0] = 0;
+            _bets[x][1] = 0;
+            _bets[x][2] = 0;
+        }
     }
 
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
-    }
-
-    mapping(uint256 => uint256) private _supplies;
-    mapping(address => Player) private _bets;
-    mapping(address => mapping(uint256 => uint256)) private _balances;
-    mapping(address => mapping(address => mapping(uint256 => uint256))) private _allowances;
-
-    //ERC-20 functions
-    function totalSupply() public view returns (uint256) {
-        return totalSupply(BASE_CLASS);
-    }
-
-    function balanceOf(address _owner) public view returns (uint256) {
-        return balanceOf(_owner, BASE_CLASS);
-    }
-
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        require(transfer(_to, BASE_CLASS, _value));
-
-        emit Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    function approve(address _spender, uint256 _value) public returns (bool) {
-        require(approve(_spender, BASE_CLASS, _value));
-
-        emit Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) public view returns (uint256) {
-        return allowance(_owner, _spender, BASE_CLASS);
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        require(transferFrom(_from, _to, BASE_CLASS, _value));
-
-        emit Transfer(_from, _to, _value);
-        return true;
     }
 
     //ERC1203 functions
@@ -170,7 +129,7 @@ contract Currency is ERC1203 {
     }
 
     function convert(uint256 _fromClass, uint256 _toClass, uint256 _value) public returns (bool) {
-        require(_fromClass > _toClass); //must convert from a more expensive class
+        require(_fromClass != _toClass);
         require(_value <= _balances[msg.sender][_fromClass]);
 
         uint256 _convertedValue;
@@ -178,6 +137,14 @@ contract Currency is ERC1203 {
             _convertedValue = goldToSilver(_value);
         } else if (_fromClass == uint256(CurrencyClass.silver) && _toClass == uint256(CurrencyClass.bronze)) {
             _convertedValue = silverToBronze(_value);
+        } else if (_fromClass == uint256(CurrencyClass.gold) && _toClass == uint256(CurrencyClass.bronze)) {
+            _convertedValue = silverToBronze(goldToSilver(_value));
+        } else if (_fromClass == uint256(CurrencyClass.bronze) && _toClass == uint256(CurrencyClass.silver)) {
+            _convertedValue = bronzeToSilver(_value);
+        } else if (_fromClass == uint256(CurrencyClass.bronze) && _toClass == uint256(CurrencyClass.gold)) {
+            _convertedValue = silverToGold(bronzeToSilver(_value));
+        } else if (_fromClass == uint256(CurrencyClass.silver) && _toClass == uint256(CurrencyClass.gold)) {
+            _convertedValue = silverToGold(_value);
         } else {
             revert();
         }
@@ -200,6 +167,14 @@ contract Currency is ERC1203 {
         return _value.safeMul(5);
     }
 
+    function bronzeToSilver(uint256 _value) private pure returns (uint256) {
+        return _value.safeDiv(5);
+    }
+
+    function silverToGold(uint256 _value) private pure returns (uint256) {
+        return _value.safeDiv(2);
+    }
+
     function fullyDilute(uint256 _bronzeValue, uint256 _silverValue, uint256 _goldValue) private pure returns (uint256) {
         uint256 _silverDilution = goldToSilver(_goldValue);
         uint256 _bronzeDilution = silverToBronze(_silverValue.safeAdd(_silverDilution));
@@ -218,13 +193,17 @@ contract Currency is ERC1203 {
     }
 
     function playerAlreadyBet(address _address) public view returns(bool) {
-        return _bets[_address].amountBet > 0;
+        return _playerInfo[_address].amountBet > 0;
     }
 
-    function _resetData() private {
+    function _resetBetData() private {
         players.length = 0;
-        totalBet = 0;
         betCount = 0;
+        for (uint256 x = 0; x < 6; x++) {
+            _bets[x][0] = 0;
+            _bets[x][1] = 0;
+            _bets[x][2] = 0;
+        }
     }
 
     function _generateNumberWinner() private view returns (uint8) {
@@ -241,29 +220,50 @@ contract Currency is ERC1203 {
         uint8 winnerCounter = 0;
         address[9] memory winners;
 
-        for (uint8 x = 0; x < players.length; x++) {
-            address playerAddress = players[x];
+        uint256 prizeInBronze = 0;
+        uint256 winningPoolInBronze = 0;
+        for (uint256 x = 0; x < 6; x++) {
+            if (x == winningNumber) {
+                winningPoolInBronze = winningPoolInBronze.safeAdd(fullyDilute(_bets[x][0], _bets[x][1], _bets[x][2]));
+            } else if (x > 0) {
+                prizeInBronze = prizeInBronze.safeAdd(fullyDilute(_bets[x][0], _bets[x][1], _bets[x][2]));
+                _supplies[0] = _supplies[0].safeAdd(fullyDilute(0, _bets[x][1], _bets[x][2]));
+                _supplies[1] = _supplies[1].safeSub(_bets[x][1]);
+                _supplies[2] = _supplies[2].safeSub(_bets[x][2]);
+            }
+        }
 
-            if (_bets[playerAddress].numberSelected == winningNumber) {
+        for (uint8 i = 0; i < players.length; i++) {
+            address playerAddress = players[i];
+
+            if (_playerInfo[playerAddress].numberSelected == winningNumber) {
                 winners[winnerCounter] = playerAddress;
                 winnerCounter++;
             }
-            delete _bets[playerAddress];
+            delete _playerInfo[playerAddress];
         }
 
         if (winnerCounter > 0) {
-            uint256 winningAmount = totalBet / winnerCounter;
-
             for (uint8 y = 0; y < winners.length; y++) {
                 if (winners[y] != address(0)) {
+                    uint256 winningAmount = 0;
+                    if (_playerInfo[winners[y]].amountClass == 2) {
+                        winningAmount = (silverToBronze(goldToSilver(_playerInfo[winners[y]].amountBet)).safeDiv(winningPoolInBronze)).safeMul(prizeInBronze);
+                    } else if (_playerInfo[winners[y]].amountClass == 1) {
+                        winningAmount = (silverToBronze(_playerInfo[winners[y]].amountBet).safeDiv(winningPoolInBronze)).safeMul(prizeInBronze);
+                    } else {
+                        winningAmount = (_playerInfo[winners[y]].amountBet.safeDiv(winningPoolInBronze)).safeMul(prizeInBronze);
+                    }
+
                     _balances[winners[y]][0] = _balances[winners[y]][0].safeAdd(winningAmount);
+                    _balances[winners[y]][_playerInfo[winners[y]].amountClass] = _balances[winners[y]][_playerInfo[winners[y]].amountClass].safeAdd(_playerInfo[winners[y]].amountBet);
                 }
             }
         } else {
-            _supplies[0] = _supplies[0].safeSub(totalBet);
+            _supplies[0] = _supplies[0].safeSub(prizeInBronze);
         }
 
-        _resetData();
+        _resetBetData();
     }
 
     function bet(uint8 _number, uint256 _value, uint256 _betClass) public {
@@ -272,32 +272,32 @@ contract Currency is ERC1203 {
         require(_betClass >= 0 && _betClass <= 2);  // Currency class can only be 0-2
         require(_number >= 1 && _number <= 5);  // only numbers 1-5 can be numberSelected
 
-        uint256 valueInBronze = _value;
-        if (_betClass != uint256(CurrencyClass.bronze)) {
-            require(convert(_betClass, uint256(CurrencyClass.bronze), _value));
-
-            if (_betClass == uint256(CurrencyClass.gold)) {
-                valueInBronze = silverToBronze(goldToSilver(_value));
-            } else if (_betClass == uint256(CurrencyClass.silver)) {
-                valueInBronze = silverToBronze(_value);
-            } else {
-                revert();
-            }
-        }
-
-        _balances[msg.sender][0] = _balances[msg.sender][0].safeSub(valueInBronze);
-        _bets[msg.sender] = Player(valueInBronze, _number);
+        _balances[msg.sender][_betClass] = _balances[msg.sender][_betClass].safeSub(_value);
+        _playerInfo[msg.sender] = Player(_value, _betClass, _number);
         players.push(msg.sender);
-        totalBet = totalBet.safeAdd(valueInBronze);
+        _bets[0][_betClass] = _bets[0][_betClass].safeAdd(_value);
+        _bets[_number][_betClass] = _bets[_number][_betClass].safeAdd(_value);
         betCount++;
 
         if (betCount == BET_COUNT_LIMIT) _rewardWinners();
     }
 
     function buyCoin(uint256 _value, uint256 _buyingClass) public payable {
-        require(msg.value > 0);
         require(_value > 0);
         require(_buyingClass >= 0 && _buyingClass <= 2);  // Currency class can only be 0-2
+
+        uint256 _multiplier = 0.01 ether;
+        if (_buyingClass == 1) {
+            _multiplier = 0.05 ether;
+        } else if (_buyingClass == 2) {
+            _multiplier = 0.1 ether;
+        }
+        uint256 _shouldPay = _multiplier * _value;
+        require(msg.value >= _shouldPay);
+
+        if (msg.value > _shouldPay) {
+            msg.sender.transfer(_shouldPay-msg.value);
+        }
 
         _balances[msg.sender][_buyingClass] = _balances[msg.sender][_buyingClass].safeAdd(_value);
         _supplies[_buyingClass] = _supplies[_buyingClass].safeAdd(_value);
@@ -309,6 +309,14 @@ contract Currency is ERC1203 {
 
         _balances[msg.sender][_coinClass] = _balances[msg.sender][_coinClass].safeAdd(_value);
         _supplies[_coinClass] = _supplies[_coinClass].safeAdd(_value);
+    }
+
+    function totalBet() public view returns (uint256, uint256, uint256) {
+        return (_bets[0][0], _bets[0][1], _bets[0][2]);
+    }
+
+    function totalBetEstimatedEth() public view returns (uint256) {
+        return fullyDilute(_bets[0][0], _bets[0][1], _bets[0][2]).safeDiv(100);
     }
 }
 

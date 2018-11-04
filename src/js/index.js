@@ -10,7 +10,8 @@ class App extends React.Component {
     super(props);
     this.state = {
       betCount: 0,
-      totalBet: 0,
+      totalBet: [0, 0, 0],
+      totalBetEstimatedEth: 0,
       userBronze: 0,
       userSilver: 0,
       userGold: 0
@@ -39,8 +40,21 @@ class App extends React.Component {
   updateState() {
     this.state.ContractInstance.totalBet((err, result) => {
       if (result != null) {
+        let totalBetCopy = this.state.totalBet;
+        result.map((item, index) => {
+          if (item.c) {
+            totalBetCopy[index] = item.c[0];
+          }
+        });
         this.setState({
-          totalBet: parseFloat(result)
+          totalBet: totalBetCopy
+        });
+      }
+    });
+    this.state.ContractInstance.totalBetEstimatedEth((err, result) => {
+      if (result != null) {
+        this.setState({
+          totalBetEstimatedEth: parseFloat(result)
         });
       }
     });
@@ -158,7 +172,7 @@ class App extends React.Component {
         </div>
         <div className="block">
           <b>Total bet:</b> &nbsp;
-          <span>{this.state.totalBet} Bronze (~ {this.state.totalBet * 0.01} ETH)</span>
+          <span>{this.state.totalBet[0]} Bronze | {this.state.totalBet[1]} Silver | {this.state.totalBet[2]} Gold (~ {this.state.totalBetEstimatedEth} ETH)</span>
         </div>
         <br/>
         <div className="block">
