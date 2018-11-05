@@ -107,33 +107,6 @@ const CONTRACT_ABI = [
         "type": "function"
     },
     {
-        "constant": false,
-        "inputs": [
-            {
-                "name": "_fromClass",
-                "type": "uint256"
-            },
-            {
-                "name": "_toClass",
-                "type": "uint256"
-            },
-            {
-                "name": "_value",
-                "type": "uint256"
-            }
-        ],
-        "name": "convert",
-        "outputs": [
-            {
-                "name": "",
-                "type": "bool"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
         "anonymous": false,
         "inputs": [
             {
@@ -159,6 +132,33 @@ const CONTRACT_ABI = [
         ],
         "name": "Transfer",
         "type": "event"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "name": "_fromClass",
+                "type": "uint256"
+            },
+            {
+                "name": "_toClass",
+                "type": "uint256"
+            },
+            {
+                "name": "_value",
+                "type": "uint256"
+            }
+        ],
+        "name": "convert",
+        "outputs": [
+            {
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
     },
     {
         "anonymous": false,
@@ -252,6 +252,11 @@ const CONTRACT_ABI = [
         "type": "constructor"
     },
     {
+        "payable": true,
+        "stateMutability": "payable",
+        "type": "fallback"
+    },
+    {
         "constant": false,
         "inputs": [
             {
@@ -264,11 +269,6 @@ const CONTRACT_ABI = [
         "payable": false,
         "stateMutability": "nonpayable",
         "type": "function"
-    },
-    {
-        "payable": true,
-        "stateMutability": "payable",
-        "type": "fallback"
     },
     {
         "constant": true,
@@ -342,6 +342,20 @@ const CONTRACT_ABI = [
             {
                 "name": "",
                 "type": "uint8"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "constant": true,
+        "inputs": [],
+        "name": "dillutedTotalBet",
+        "outputs": [
+            {
+                "name": "",
+                "type": "uint256"
             }
         ],
         "payable": false,
@@ -466,20 +480,6 @@ const CONTRACT_ABI = [
     },
     {
         "constant": true,
-        "inputs": [],
-        "name": "totalBetEstimatedEth",
-        "outputs": [
-            {
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "constant": true,
         "inputs": [
             {
                 "name": "_class",
@@ -498,7 +498,7 @@ const CONTRACT_ABI = [
         "type": "function"
     }
 ];
-const CONTRACT_ADDRESS = "0x4b2319c5bacd4e54f577c309b549cb408893582e";
+const CONTRACT_ADDRESS = "0x821574bd412adfe762965cafae25b5e98c2a90e5";
 
 export {
     CONTRACT_ABI,

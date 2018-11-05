@@ -51,10 +51,10 @@ class App extends React.Component {
         });
       }
     });
-    this.state.ContractInstance.totalBetEstimatedEth((err, result) => {
+    this.state.ContractInstance.dillutedTotalBet((err, result) => {
       if (result != null) {
         this.setState({
-          totalBetEstimatedEth: parseFloat(result)
+          totalBetEstimatedEth: parseFloat(result) / 100
         });
       }
     });

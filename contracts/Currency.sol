@@ -315,8 +315,8 @@ contract Currency is ERC1203 {
         return (_bets[0][0], _bets[0][1], _bets[0][2]);
     }
 
-    function totalBetEstimatedEth() public view returns (uint256) {
-        return fullyDilute(_bets[0][0], _bets[0][1], _bets[0][2]).safeDiv(100);
+    function dillutedTotalBet() public view returns (uint256) {
+        return fullyDilute(_bets[0][0], _bets[0][1], _bets[0][2]);
     }
 }
 
